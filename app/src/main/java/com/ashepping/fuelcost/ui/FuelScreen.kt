@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.ashepping.fuelcost.data.Cars
 import com.ashepping.fuelcost.data.Profile
 import com.ashepping.fuelcost.data.ProfileStore
+import com.ashepping.fuelcost.domain.Car
 import com.ashepping.fuelcost.domain.Currency
 import com.ashepping.fuelcost.domain.EstimateInput
 import com.ashepping.fuelcost.domain.Formula
@@ -60,25 +61,13 @@ fun FuelScreen() {
 
     LaunchedEffect(carId, customL, year, km, road, ac, heat, price, currency) {
         store.save(
-            Profile(
-                carId = carId,
-                customL = customL,
-                year = year,
-                km = km,
-                road = road,
-                ac = ac,
-                heat = heat,
-                price = price,
-                currency = currency
-            )
+            Profile(carId, customL, year, km, road, ac, heat, price, currency)
         )
     }
 
     val selected = if (carId == Cars.CUSTOM_ID) null else Cars.byId(carId)
     val label = if (carId == Cars.CUSTOM_ID) "Свой расход" else selected?.title ?: "Toyota Corolla"
-    val resultText = remember(carId, customL, year, km, road, ac, heat, price, currency) {
-        computeResult(carId, selected, customL, year, km, road, ac, heat, price, currency)
-    }
+    val resultText = computeResult(carId, selected, customL, year, km, road, ac, heat, price, currency)
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -90,6 +79,17 @@ fun FuelScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("Fuel Cost", style = MaterialTheme.typography.headlineMedium)
+            Surface(
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = resultText,
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+            Text("Оценка расхода", style = MaterialTheme.typography.bodySmall)
             ExposedDropdownMenuBox(expanded = menuOpen, onExpandedChange = { menuOpen = it }) {
                 OutlinedTextField(
                     value = label,
@@ -100,15 +100,9 @@ fun FuelScreen() {
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Свой расход") },
-                        onClick = { carId = Cars.CUSTOM_ID; menuOpen = false }
-                    )
+                    DropdownMenuItem(text = { Text("Свой расход") }, onClick = { carId = Cars.CUSTOM_ID; menuOpen = false })
                     Cars.catalog.forEach { car ->
-                        DropdownMenuItem(
-                            text = { Text(car.title) },
-                            onClick = { carId = car.id; menuOpen = false }
-                        )
+                        DropdownMenuItem(text = { Text(car.title) }, onClick = { carId = car.id; menuOpen = false })
                     }
                 }
             }
@@ -171,19 +165,13 @@ fun FuelScreen() {
             Button(onClick = { }, modifier = Modifier.fillMaxWidth()) {
                 Text("Посчитать")
             }
-            if (resultText.isNotBlank()) {
-                Surface(color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f), modifier = Modifier.fillMaxWidth()) {
-                    Text(resultText, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
-                }
-            }
-            Text("Оценка расхода", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         }
     }
 }
 
 private fun computeResult(
     carId: String,
-    selected: com.ashepping.fuelcost.domain.Car?,
+    selected: Car?,
     customL: String,
     year: String,
     km: String,
@@ -193,36 +181,23 @@ private fun computeResult(
     price: String,
     currency: String
 ): String {
-    val distance = km.replace(',', '.').toDoubleOrNull() ?: return ""
-    val p = price.replace(',', '.').toDoubleOrNull() ?: return ""
+    val distance = km.replace(',', '.').replace(' ', '').toDoubleOrNull()
+    val p = price.replace(',', '.').replace(' ', '').toDoubleOrNull()
+    if (distance == null || distance <= 0) return "Укажи дистанцию, км"
+    if (p == null || p <= 0) return "Укажи цену литра"
+    if (carId == Cars.CUSTOM_ID) {
+        val mixed = customL.replace(',', '.').replace(' ', '').toDoubleOrNull()
+        if (mixed == null || mixed <= 0) return "Укажи свой расход л/100"
+    } else if (selected == null) {
+        return "Выбери модель"
+    }
     val y = year.toIntOrNull()
     val roadEnum = runCatching { Road.valueOf(road) }.getOrDefault(Road.HIGHWAY)
     val input = if (carId == Cars.CUSTOM_ID) {
-        EstimateInput(
-            cityL100 = null,
-            highwayL100 = null,
-            mixedL100 = customL.replace(',', '.').toDoubleOrNull(),
-            year = y,
-            distanceKm = distance,
-            road = roadEnum,
-            acOn = ac,
-            heatOn = heat,
-            pricePerLiter = p
-        )
+        EstimateInput(null, null, customL.replace(',', '.').toDoubleOrNull(), y, distance, roadEnum, ac, heat, p)
     } else {
-        val car = selected ?: return ""
-        EstimateInput(
-            cityL100 = car.cityL100,
-            highwayL100 = car.highwayL100,
-            mixedL100 = null,
-            year = y,
-            distanceKm = distance,
-            road = roadEnum,
-            acOn = ac,
-            heatOn = heat,
-            pricePerLiter = p
-        )
+        EstimateInput(selected!!.cityL100, selected.highwayL100, null, y, distance, roadEnum, ac, heat, p)
     }
-    val out = Formula.estimate(input) ?: return ""
+    val out = Formula.estimate(input) ?: return "Не хватает данных"
     return "${out.litersText} л | ${out.costText} $currency"
 }
