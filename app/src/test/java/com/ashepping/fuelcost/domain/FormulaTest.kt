@@ -19,8 +19,13 @@ class FormulaTest {
                 pricePerLiter = 1.65
             )
         )!!
-        assertEquals("6.4", String.format(java.util.Locale.US, "%.1f", out.liters).let { out.litersText.take(3) })
-        // 4.8 * 1.105 * 1.08 * 1.20 = 6.8515 → ~6.9 л, cost ~11.30
-        assertEquals(6.9, kotlin.math.round(out.liters * 10) / 10.0, 0.05)
+        assertEquals("6.9", out.litersText)
+        assertEquals("11.34", out.costText)
+    }
+
+    @Test
+    fun ageCap() {
+        val k = Formula.ageFactor(1980, 2026)
+        assertEquals(1.30, k, 0.0001)
     }
 }

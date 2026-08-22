@@ -1,8 +1,8 @@
 package com.ashepping.fuelcost.domain
 
+import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.round
 
 object Formula {
     fun estimate(input: EstimateInput): Estimate? {
@@ -17,8 +17,8 @@ object Formula {
         return Estimate(
             liters = liters,
             cost = cost,
-            litersText = oneDecimal(liters),
-            costText = twoDecimal(cost)
+            litersText = String.format(Locale.US, "%.1f", liters),
+            costText = String.format(Locale.US, "%.2f", cost)
         )
     }
 
@@ -33,6 +33,7 @@ object Formula {
             }
         }
         val mixed = input.mixedL100 ?: city ?: hwy ?: return null
+        if (mixed <= 0) return null
         return when (input.road) {
             Road.HIGHWAY -> mixed * 0.90
             Road.CITY -> mixed * 1.15
@@ -42,14 +43,9 @@ object Formula {
 
     fun ageFactor(year: Int?, nowYear: Int): Double {
         if (year == null) return 1.0
-        val age = min(25, max(0, nowYear - year))
+        val clampedYear = min(nowYear, max(1980, year))
+        val age = min(25, max(0, nowYear - clampedYear))
         val k = 1.0 + 0.015 * max(0, age - 3)
         return min(1.30, k)
     }
-
-    private fun oneDecimal(v: Double): String =
-        ((round(v * 10.0) / 10.0)).toString()
-
-    private fun twoDecimal(v: Double): String =
-        String.format(java.util.Locale.US, "%.2f", v)
 }
