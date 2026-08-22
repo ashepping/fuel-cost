@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -60,9 +59,7 @@ fun FuelScreen() {
     var curOpen by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(carId, customL, year, km, road, ac, heat, price, currency) {
-        store.save(
-            Profile(carId, customL, year, km, road, ac, heat, price, currency)
-        )
+        store.save(Profile(carId, customL, year, km, road, ac, heat, price, currency))
     }
 
     val selected = if (carId == Cars.CUSTOM_ID) null else Cars.byId(carId)
@@ -83,11 +80,7 @@ fun FuelScreen() {
                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = resultText,
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.titleLarge
-                )
+                Text(resultText, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
             }
             Text("Оценка расхода", style = MaterialTheme.typography.bodySmall)
             ExposedDropdownMenuBox(expanded = menuOpen, onExpandedChange = { menuOpen = it }) {
@@ -161,9 +154,6 @@ fun FuelScreen() {
                         }
                     }
                 }
-            }
-            Button(onClick = { }, modifier = Modifier.fillMaxWidth()) {
-                Text("Посчитать")
             }
         }
     }
