@@ -159,6 +159,9 @@ fun FuelScreen() {
     }
 }
 
+private fun parseNum(raw: String): Double? =
+    raw.replace(",", ".").replace(" ", "").toDoubleOrNull()
+
 private fun computeResult(
     carId: String,
     selected: Car?,
@@ -171,12 +174,12 @@ private fun computeResult(
     price: String,
     currency: String
 ): String {
-    val distance = km.replace(',', '.').replace(' ', '').toDoubleOrNull()
-    val p = price.replace(',', '.').replace(' ', '').toDoubleOrNull()
+    val distance = parseNum(km)
+    val p = parseNum(price)
     if (distance == null || distance <= 0) return "Укажи дистанцию, км"
     if (p == null || p <= 0) return "Укажи цену литра"
     if (carId == Cars.CUSTOM_ID) {
-        val mixed = customL.replace(',', '.').replace(' ', '').toDoubleOrNull()
+        val mixed = parseNum(customL)
         if (mixed == null || mixed <= 0) return "Укажи свой расход л/100"
     } else if (selected == null) {
         return "Выбери модель"
@@ -184,7 +187,7 @@ private fun computeResult(
     val y = year.toIntOrNull()
     val roadEnum = runCatching { Road.valueOf(road) }.getOrDefault(Road.HIGHWAY)
     val input = if (carId == Cars.CUSTOM_ID) {
-        EstimateInput(null, null, customL.replace(',', '.').toDoubleOrNull(), y, distance, roadEnum, ac, heat, p)
+        EstimateInput(null, null, parseNum(customL), y, distance, roadEnum, ac, heat, p)
     } else {
         EstimateInput(selected!!.cityL100, selected.highwayL100, null, y, distance, roadEnum, ac, heat, p)
     }
