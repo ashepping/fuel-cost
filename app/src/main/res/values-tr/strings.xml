@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hadi</string>
+    <string name="subtitle">Yakit maliyeti tahmini</string>
+    <string name="brand">Marka</string>
+    <string name="brand_not_found">Marka bulunamadi</string>
+    <string name="model">Model</string>
+    <string name="custom_use">Ozel tuketim</string>
+    <string name="custom_l">Ozel tuketim L/100</string>
+    <string name="year">Yil</string>
+    <string name="distance">Mesafe, km</string>
+    <string name="city">Sehir</string>
+    <string name="highway">Otoyol</string>
+    <string name="offroad">Toprak yol</string>
+    <string name="ac_on">Klima acik</string>
+    <string name="ac_off">Klima kapali</string>
+    <string name="heat_on">Isitma acik</string>
+    <string name="heat_off">Isitma kapali</string>
+    <string name="price">Litre fiyati</string>
+    <string name="currency">Para birimi</string>
+    <string name="need_distance">Mesafeyi yaz, km</string>
+    <string name="need_price">Litre fiyatini yaz</string>
+    <string name="need_custom">Tuketimi yaz L/100</string>
+    <string name="need_model">Model sec</string>
+    <string name="need_data">Veri eksik</string>
+    <string name="unit_l">L</string>
+    <string name="language">Dil</string>
+</resources>
