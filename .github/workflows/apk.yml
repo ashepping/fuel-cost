@@ -10,27 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Optional launcher photo
+      - name: Decode exact logo photo
         run: |
           python3 - <<'PY'
           import base64, pathlib
+          parts = sorted(pathlib.Path('branding').glob('logo*.txt'))
+          raw = ''.join(''.join(p.read_text().split()) for p in parts)
+          raw += '=' * ((4 - len(raw) % 4) % 4)
+          data = base64.b64decode(raw, validate=False)
           out = pathlib.Path('app/src/main/res/drawable/ic_launcher_src.jpg')
-          try:
-              parts = sorted(pathlib.Path('branding').glob('ic_p*.txt'))
-              raw = ''.join(''.join(p.read_text().split()) for p in parts)
-              n = len(raw) % 4
-              if n == 1:
-                  raw = raw[:-1]
-              elif n:
-                  raw += '=' * (4 - n)
-              data = base64.b64decode(raw, validate=False)
-              if data[:2] == b'\xff\xd8':
-                  out.write_bytes(data)
-                  print('photo ok', len(data))
-              else:
-                  print('skip photo')
-          except Exception as e:
-              print('skip photo', e)
+          out.write_bytes(data)
+          print('logo parts', [p.name for p in parts], 'bytes', len(data))
           PY
       - uses: actions/setup-java@v4
         with:
