@@ -11,7 +11,8 @@ data class Profile(
     val ac: Boolean = true,
     val heat: Boolean = false,
     val price: String = "1.65",
-    val currency: String = "EUR"
+    val currency: String = "EUR",
+    val look: String = "CURRENT"
 )
 
 class ProfileStore(context: Context) {
@@ -26,7 +27,8 @@ class ProfileStore(context: Context) {
         ac = prefs.getBoolean("ac", true),
         heat = prefs.getBoolean("heat", false),
         price = prefs.getString("price", "1.65") ?: "1.65",
-        currency = prefs.getString("currency", "EUR") ?: "EUR"
+        currency = prefs.getString("currency", "EUR") ?: "EUR",
+        look = prefs.getString("look", "CURRENT") ?: "CURRENT"
     )
 
     fun save(p: Profile) {
@@ -40,6 +42,7 @@ class ProfileStore(context: Context) {
             .putBoolean("heat", p.heat)
             .putString("price", p.price)
             .putString("currency", p.currency)
+            .putString("look", p.look)
             .apply()
     }
 }
