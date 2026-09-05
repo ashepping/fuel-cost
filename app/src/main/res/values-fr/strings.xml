@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">On y va</string>
+    <string name="subtitle">Estimation du carburant</string>
+    <string name="brand">Marque</string>
+    <string name="brand_not_found">Marque introuvable</string>
+    <string name="model">Modele</string>
+    <string name="custom_use">Conso perso</string>
+    <string name="custom_l">Conso perso L/100</string>
+    <string name="year">Annee</string>
+    <string name="distance">Distance, km</string>
+    <string name="city">Ville</string>
+    <string name="highway">Autoroute</string>
+    <string name="offroad">Piste</string>
+    <string name="ac_on">Clim on</string>
+    <string name="ac_off">Clim off</string>
+    <string name="heat_on">Chauffage on</string>
+    <string name="heat_off">Chauffage off</string>
+    <string name="price">Prix au litre</string>
+    <string name="currency">Devise</string>
+    <string name="need_distance">Indique la distance, km</string>
+    <string name="need_price">Indique le prix au litre</string>
+    <string name="need_custom">Indique la conso L/100</string>
+    <string name="need_model">Choisis un modele</string>
+    <string name="need_data">Donnees manquantes</string>
+    <string name="unit_l">L</string>
+    <string name="language">Langue</string>
+</resources>
