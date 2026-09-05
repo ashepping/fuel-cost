@@ -1,17 +1,17 @@
 package com.ashepping.fuelcost.ui
 
-data class AppLang(val code: String, val label: String, val shortCode: String)
+data class AppLang(val code: String, val shortCode: String)
 
 object AppLangs {
     val all = listOf(
-        AppLang("ru", "Русский", "RU"),
-        AppLang("en", "English", "EN"),
-        AppLang("es", "Español", "ES"),
-        AppLang("pt", "Português", "PT"),
-        AppLang("de", "Deutsch", "DE"),
-        AppLang("fr", "Français", "FR"),
-        AppLang("tr", "Türkçe", "TR"),
-        AppLang("ar", "العربية", "AR")
+        AppLang("ru", "RUS"),
+        AppLang("en", "ENG"),
+        AppLang("es", "ESP"),
+        AppLang("pt", "POR"),
+        AppLang("de", "DEU"),
+        AppLang("fr", "FRA"),
+        AppLang("tr", "TUR"),
+        AppLang("ar", "ARA")
     )
 
     fun of(code: String) = all.firstOrNull { it.code == code } ?: all.first()
