@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Поехали</string>
+    <string name="subtitle">Оценка расхода топлива</string>
+    <string name="brand">Марка</string>
+    <string name="brand_not_found">Марка не найдена</string>
+    <string name="model">Модель</string>
+    <string name="custom_use">Свой расход</string>
+    <string name="custom_l">Свой расход л/100</string>
+    <string name="year">Год выпуска</string>
+    <string name="distance">Дистанция, км</string>
+    <string name="city">Город</string>
+    <string name="highway">Шоссе</string>
+    <string name="offroad">Грунтовая дорога</string>
+    <string name="ac_on">AC вкл</string>
+    <string name="ac_off">AC выкл</string>
+    <string name="heat_on">Обогрев вкл</string>
+    <string name="heat_off">Обогрев выкл</string>
+    <string name="price">Цена литра</string>
+    <string name="currency">Валюта</string>
+    <string name="need_distance">Укажи дистанцию, км</string>
+    <string name="need_price">Укажи цену литра</string>
+    <string name="need_custom">Укажи свой расход л/100</string>
+    <string name="need_model">Выбери модель</string>
+    <string name="need_data">Не хватает данных</string>
+    <string name="unit_l">л</string>
+    <string name="language">Язык</string>
 </resources>
