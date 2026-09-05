@@ -57,6 +57,7 @@ fun FuelScreen() {
     var currency by rememberSaveable { mutableStateOf(saved.currency) }
     var menuOpen by rememberSaveable { mutableStateOf(false) }
     var curOpen by rememberSaveable { mutableStateOf(false) }
+    var carQuery by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(carId, customL, year, km, road, ac, heat, price, currency) {
         store.save(Profile(carId, customL, year, km, road, ac, heat, price, currency))
@@ -65,6 +66,7 @@ fun FuelScreen() {
     val selected = if (carId == Cars.CUSTOM_ID) null else Cars.byId(carId)
     val label = if (carId == Cars.CUSTOM_ID) "Свой расход" else selected?.title ?: "Toyota Corolla"
     val resultText = computeResult(carId, selected, customL, year, km, road, ac, heat, price, currency)
+    val carsShown = Cars.search(carQuery)
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -75,7 +77,7 @@ fun FuelScreen() {
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Fuel Cost", style = MaterialTheme.typography.headlineMedium)
+            Text("Поехали", style = MaterialTheme.typography.headlineMedium)
             Surface(
                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
                 modifier = Modifier.fillMaxWidth()
@@ -83,6 +85,12 @@ fun FuelScreen() {
                 Text(resultText, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
             }
             Text("Оценка расхода", style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(
+                value = carQuery,
+                onValueChange = { carQuery = it },
+                label = { Text("Поиск марки или модели") },
+                modifier = Modifier.fillMaxWidth()
+            )
             ExposedDropdownMenuBox(expanded = menuOpen, onExpandedChange = { menuOpen = it }) {
                 OutlinedTextField(
                     value = label,
@@ -94,7 +102,7 @@ fun FuelScreen() {
                 )
                 ExposedDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(text = { Text("Свой расход") }, onClick = { carId = Cars.CUSTOM_ID; menuOpen = false })
-                    Cars.catalog.forEach { car ->
+                    carsShown.forEach { car ->
                         DropdownMenuItem(text = { Text(car.title) }, onClick = { carId = car.id; menuOpen = false })
                     }
                 }
