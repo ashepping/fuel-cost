@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -30,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -62,15 +65,17 @@ fun FuelScreen() {
     var heat by rememberSaveable { mutableStateOf(saved.heat) }
     var price by rememberSaveable { mutableStateOf(saved.price) }
     var currency by rememberSaveable { mutableStateOf(saved.currency) }
+    var lookName by rememberSaveable { mutableStateOf(saved.look) }
     var brandOpen by rememberSaveable { mutableStateOf(false) }
     var modelOpen by rememberSaveable { mutableStateOf(false) }
     var curOpen by rememberSaveable { mutableStateOf(false) }
     var brandQuery by rememberSaveable {
         mutableStateOf(Cars.byId(saved.carId)?.brand.orEmpty())
     }
+    val look = runCatching { AppLook.valueOf(lookName) }.getOrDefault(AppLook.CURRENT)
 
-    LaunchedEffect(carId, customL, year, km, road, ac, heat, price, currency) {
-        store.save(Profile(carId, customL, year, km, road, ac, heat, price, currency))
+    LaunchedEffect(carId, customL, year, km, road, ac, heat, price, currency, lookName) {
+        store.save(Profile(carId, customL, year, km, road, ac, heat, price, currency, lookName))
     }
 
     val selected = if (carId == Cars.CUSTOM_ID) null else Cars.byId(carId)
@@ -84,9 +89,6 @@ fun FuelScreen() {
         Cars.catalog.filter { it.brand.equals(activeBrand, ignoreCase = true) }
     }
     val resultText = computeResult(carId, selected, customL, year, km, road, ac, heat, price, currency)
-    val menuColors = MenuDefaults.itemColors(
-        textColor = MaterialTheme.colorScheme.onSecondaryContainer
-    )
 
     fun pickBrand(brand: String) {
         brandQuery = brand
@@ -99,174 +101,196 @@ fun FuelScreen() {
         focus.clearFocus()
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text("Поехали", style = MaterialTheme.typography.headlineMedium)
-            Text("Оценка расхода", style = MaterialTheme.typography.bodySmall)
-
-            ExposedDropdownMenuBox(expanded = brandOpen, onExpandedChange = { brandOpen = it }) {
-                OutlinedTextField(
-                    value = brandQuery,
-                    onValueChange = {
-                        brandQuery = it
-                        brandOpen = true
-                        modelOpen = false
-                    },
-                    label = { Text("Марка") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(brandOpen) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = {
-                        brandMatches.firstOrNull()?.let { pickBrand(it) }
-                    }),
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = brandOpen,
-                    onDismissRequest = { brandOpen = false },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+    FuelTheme(look) {
+        val menuColors = MenuDefaults.itemColors(
+            textColor = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (brandMatches.isEmpty()) {
-                        DropdownMenuItem(
-                            text = { Text("Марка не найдена") },
-                            onClick = { brandOpen = false },
-                            colors = menuColors
-                        )
-                    } else {
-                        brandMatches.forEach { brand ->
-                            DropdownMenuItem(
-                                text = { Text(brand) },
-                                onClick = { pickBrand(brand) },
-                                colors = menuColors
-                            )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Поехали", style = MaterialTheme.typography.headlineMedium)
+                        Text("Оценка расхода", style = MaterialTheme.typography.bodySmall)
+                    }
+                    IconButton(onClick = {
+                        lookName = when (look) {
+                            AppLook.CURRENT -> AppLook.NEURAL_DARK.name
+                            AppLook.NEURAL_DARK -> AppLook.NEURAL_LIGHT.name
+                            AppLook.NEURAL_LIGHT -> AppLook.CURRENT.name
                         }
+                    }) {
+                        ThemeMark(look)
                     }
                 }
-            }
 
-            ExposedDropdownMenuBox(
-                expanded = modelOpen && activeBrand != null,
-                onExpandedChange = { open ->
-                    if (activeBrand != null) modelOpen = open
-                }
-            ) {
-                OutlinedTextField(
-                    value = when {
-                        activeBrand == null -> ""
-                        carId == Cars.CUSTOM_ID -> "Свой расход"
-                        selected?.brand.equals(activeBrand, ignoreCase = true) -> selected?.model.orEmpty()
-                        else -> ""
-                    },
-                    onValueChange = {},
-                    readOnly = true,
-                    enabled = activeBrand != null,
-                    label = { Text("Модель") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(modelOpen) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = modelOpen && activeBrand != null,
-                    onDismissRequest = { modelOpen = false },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Свой расход") },
-                        onClick = { carId = Cars.CUSTOM_ID; modelOpen = false },
-                        colors = menuColors
-                    )
-                    models.forEach { car ->
-                        DropdownMenuItem(
-                            text = { Text(car.model) },
-                            onClick = { carId = car.id; modelOpen = false },
-                            colors = menuColors
-                        )
-                    }
-                }
-            }
-
-            if (carId == Cars.CUSTOM_ID) {
-                OutlinedTextField(
-                    value = customL,
-                    onValueChange = { customL = it },
-                    label = { Text("Свой расход л/100") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            OutlinedTextField(
-                value = year,
-                onValueChange = { year = it.filter { ch -> ch.isDigit() }.take(4) },
-                label = { Text("Год выпуска") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = km,
-                onValueChange = { km = it },
-                label = { Text("Дистанция, км") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
-            )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(selected = road == Road.CITY.name, onClick = { road = Road.CITY.name }, label = { Text("Город") })
-                FilterChip(selected = road == Road.HIGHWAY.name, onClick = { road = Road.HIGHWAY.name }, label = { Text("Шоссе") })
-                FilterChip(selected = road == Road.OFFROAD.name, onClick = { road = Road.OFFROAD.name }, label = { Text("Грунтовая дорога") })
-            }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(selected = ac, onClick = { ac = !ac }, label = { Text(if (ac) "AC вкл" else "AC выкл") })
-                FilterChip(selected = heat, onClick = { heat = !heat }, label = { Text(if (heat) "Печка вкл" else "Печка выкл") })
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Цена литра") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
-                ExposedDropdownMenuBox(expanded = curOpen, onExpandedChange = { curOpen = it }, modifier = Modifier.weight(0.7f)) {
+                ExposedDropdownMenuBox(expanded = brandOpen, onExpandedChange = { brandOpen = it }) {
                     OutlinedTextField(
-                        value = currency,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Валюта") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(curOpen) },
+                        value = brandQuery,
+                        onValueChange = {
+                            brandQuery = it
+                            brandOpen = true
+                            modelOpen = false
+                        },
+                        label = { Text("Марка") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(brandOpen) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = {
+                            brandMatches.firstOrNull()?.let { pickBrand(it) }
+                        }),
                         modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
                     ExposedDropdownMenu(
-                        expanded = curOpen,
-                        onDismissRequest = { curOpen = false },
+                        expanded = brandOpen,
+                        onDismissRequest = { brandOpen = false },
                         containerColor = MaterialTheme.colorScheme.secondaryContainer
                     ) {
-                        Currency.entries.forEach {
+                        if (brandMatches.isEmpty()) {
                             DropdownMenuItem(
-                                text = { Text(it.code) },
-                                onClick = { currency = it.code; curOpen = false },
+                                text = { Text("Марка не найдена") },
+                                onClick = { brandOpen = false },
+                                colors = menuColors
+                            )
+                        } else {
+                            brandMatches.forEach { brand ->
+                                DropdownMenuItem(
+                                    text = { Text(brand) },
+                                    onClick = { pickBrand(brand) },
+                                    colors = menuColors
+                                )
+                            }
+                        }
+                    }
+                }
+
+                ExposedDropdownMenuBox(
+                    expanded = modelOpen && activeBrand != null,
+                    onExpandedChange = { open ->
+                        if (activeBrand != null) modelOpen = open
+                    }
+                ) {
+                    OutlinedTextField(
+                        value = when {
+                            activeBrand == null -> ""
+                            carId == Cars.CUSTOM_ID -> "Свой расход"
+                            selected?.brand.equals(activeBrand, ignoreCase = true) -> selected?.model.orEmpty()
+                            else -> ""
+                        },
+                        onValueChange = {},
+                        readOnly = true,
+                        enabled = activeBrand != null,
+                        label = { Text("Модель") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(modelOpen) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = modelOpen && activeBrand != null,
+                        onDismissRequest = { modelOpen = false },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Свой расход") },
+                            onClick = { carId = Cars.CUSTOM_ID; modelOpen = false },
+                            colors = menuColors
+                        )
+                        models.forEach { car ->
+                            DropdownMenuItem(
+                                text = { Text(car.model) },
+                                onClick = { carId = car.id; modelOpen = false },
                                 colors = menuColors
                             )
                         }
                     }
                 }
-            }
 
-            Surface(
-                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(resultText, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
+                if (carId == Cars.CUSTOM_ID) {
+                    OutlinedTextField(
+                        value = customL,
+                        onValueChange = { customL = it },
+                        label = { Text("Свой расход л/100") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                OutlinedTextField(
+                    value = year,
+                    onValueChange = { year = it.filter { ch -> ch.isDigit() }.take(4) },
+                    label = { Text("Год выпуска") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = km,
+                    onValueChange = { km = it },
+                    label = { Text("Дистанция, км") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(selected = road == Road.CITY.name, onClick = { road = Road.CITY.name }, label = { Text("Город") })
+                    FilterChip(selected = road == Road.HIGHWAY.name, onClick = { road = Road.HIGHWAY.name }, label = { Text("Шоссе") })
+                    FilterChip(selected = road == Road.OFFROAD.name, onClick = { road = Road.OFFROAD.name }, label = { Text("Грунтовая дорога") })
+                }
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(selected = ac, onClick = { ac = !ac }, label = { Text(if (ac) "AC вкл" else "AC выкл") })
+                    FilterChip(selected = heat, onClick = { heat = !heat }, label = { Text(if (heat) "Печка вкл" else "Печка выкл") })
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = price,
+                        onValueChange = { price = it },
+                        label = { Text("Цена литра") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                    ExposedDropdownMenuBox(expanded = curOpen, onExpandedChange = { curOpen = it }, modifier = Modifier.weight(0.7f)) {
+                        OutlinedTextField(
+                            value = currency,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Валюта") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(curOpen) },
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = curOpen,
+                            onDismissRequest = { curOpen = false },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Currency.entries.forEach {
+                                DropdownMenuItem(
+                                    text = { Text(it.code) },
+                                    onClick = { currency = it.code; curOpen = false },
+                                    colors = menuColors
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Surface(
+                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(resultText, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
+                }
+                Spacer(Modifier.padding(4.dp))
             }
         }
     }
