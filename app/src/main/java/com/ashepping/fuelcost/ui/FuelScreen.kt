@@ -2,6 +2,7 @@ package com.ashepping.fuelcost.ui
 
 import android.content.Context
 import android.content.res.Configuration
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,12 +14,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -46,9 +46,11 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import com.ashepping.fuelcost.R
 import com.ashepping.fuelcost.data.Cars
 import com.ashepping.fuelcost.data.Profile
@@ -174,26 +176,29 @@ private fun FuelScreenBody(
                         IconButton(onClick = { langOpen = true }) {
                             LangMark(look)
                         }
-                        DropdownMenu(
-                            expanded = langOpen,
-                            onDismissRequest = { langOpen = false },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
-                        ) {
-                            AppLangs.all.forEach { item ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            item.shortCode,
-                                            fontSize = 13.sp,
-                                            modifier = Modifier.widthIn(min = 48.dp)
-                                        )
-                                    },
-                                    onClick = {
-                                        onLang(item.code)
-                                        langOpen = false
-                                    },
-                                    colors = menuColors
-                                )
+                        if (langOpen) {
+                            Popup(alignment = Alignment.TopCenter, onDismissRequest = { langOpen = false }) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    modifier = Modifier.width(56.dp)
+                                ) {
+                                    Column {
+                                        AppLangs.all.forEach { item ->
+                                            Text(
+                                                item.shortCode,
+                                                fontSize = 12.sp,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable {
+                                                        onLang(item.code)
+                                                        langOpen = false
+                                                    }
+                                                    .padding(vertical = 8.dp)
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
