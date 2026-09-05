@@ -118,7 +118,6 @@ fun FuelScreen() {
                         modelOpen = false
                     },
                     label = { Text("Марка") },
-                    placeholder = { Text("Стереть и написать Kia") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(brandOpen) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -167,7 +166,6 @@ fun FuelScreen() {
                     readOnly = true,
                     enabled = activeBrand != null,
                     label = { Text("Модель") },
-                    placeholder = { Text("Сначала выбери марку") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(modelOpen) },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
