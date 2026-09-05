@@ -249,7 +249,7 @@ fun FuelScreen() {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilterChip(selected = ac, onClick = { ac = !ac }, label = { Text(if (ac) "AC вкл" else "AC выкл") })
-                    FilterChip(selected = heat, onClick = { heat = !heat }, label = { Text(if (heat) "Печка вкл" else "Печка выкл") })
+                    FilterChip(selected = heat, onClick = { heat = !heat }, label = { Text(if (heat) "Обогрев вкл" else "Обогрев выкл") })
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
