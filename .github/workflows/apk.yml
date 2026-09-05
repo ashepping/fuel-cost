@@ -10,6 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Decode launcher image
+        run: |
+          python3 - <<'PY'
+          import base64, pathlib
+          raw = pathlib.Path("branding/ic_launcher.b64").read_text().strip()
+          out = pathlib.Path("app/src/main/res/drawable/ic_launcher_src.jpg")
+          out.write_bytes(base64.b64decode(raw))
+          print("wrote", out, out.stat().st_size)
+          PY
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
