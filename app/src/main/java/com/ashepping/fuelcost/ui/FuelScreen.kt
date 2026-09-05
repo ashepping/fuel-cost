@@ -120,7 +120,7 @@ fun FuelScreen() {
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Поехали", style = MaterialTheme.typography.headlineMedium)
-                        Text("Оценка расхода", style = MaterialTheme.typography.bodySmall)
+                        Text("Оценка расхода топлива", style = MaterialTheme.typography.bodySmall)
                     }
                     IconButton(onClick = {
                         lookName = when (look) {
