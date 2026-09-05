@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenuItem
@@ -28,6 +29,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.ashepping.fuelcost.data.Cars
@@ -43,6 +46,7 @@ import com.ashepping.fuelcost.domain.Road
 @Composable
 fun FuelScreen() {
     val context = LocalContext.current
+    val focus = LocalFocusManager.current
     val store = remember { ProfileStore(context) }
     val saved = remember { store.load() }
 
@@ -68,6 +72,13 @@ fun FuelScreen() {
     val resultText = computeResult(carId, selected, customL, year, km, road, ac, heat, price, currency)
     val carsShown = Cars.search(carQuery)
 
+    fun pickCar(id: String) {
+        carId = id
+        carQuery = ""
+        menuOpen = false
+        focus.clearFocus()
+    }
+
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -85,25 +96,49 @@ fun FuelScreen() {
                 Text(resultText, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
             }
             Text("Оценка расхода", style = MaterialTheme.typography.bodySmall)
-            OutlinedTextField(
-                value = carQuery,
-                onValueChange = { carQuery = it },
-                label = { Text("Поиск марки или модели") },
-                modifier = Modifier.fillMaxWidth()
-            )
             ExposedDropdownMenuBox(expanded = menuOpen, onExpandedChange = { menuOpen = it }) {
                 OutlinedTextField(
-                    value = label,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Модель") },
+                    value = if (menuOpen || carQuery.isNotBlank()) carQuery else label,
+                    onValueChange = {
+                        carQuery = it
+                        menuOpen = true
+                    },
+                    label = { Text("Марка или модель") },
+                    placeholder = { Text("Начни печатать Toyota") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(menuOpen) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            val first = carsShown.firstOrNull()
+                            when {
+                                carQuery.isBlank() -> pickCar(Cars.CUSTOM_ID)
+                                first != null -> pickCar(first.id)
+                            }
+                        }
+                    ),
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(text = { Text("Свой расход") }, onClick = { carId = Cars.CUSTOM_ID; menuOpen = false })
-                    carsShown.forEach { car ->
-                        DropdownMenuItem(text = { Text(car.title) }, onClick = { carId = car.id; menuOpen = false })
+                    DropdownMenuItem(
+                        text = { Text("Свой расход") },
+                        onClick = { pickCar(Cars.CUSTOM_ID) }
+                    )
+                    if (carsShown.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("Ничего не найдено") },
+                            onClick = { menuOpen = false }
+                        )
+                    } else {
+                        carsShown.take(40).forEach { car ->
+                            DropdownMenuItem(
+                                text = { Text(car.title) },
+                                onClick = { pickCar(car.id) }
+                            )
+                        }
                     }
                 }
             }
