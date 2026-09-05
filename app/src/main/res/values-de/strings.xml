@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Los geht\'s</string>
+    <string name="subtitle">Kraftstoffkosten schatzen</string>
+    <string name="brand">Marke</string>
+    <string name="brand_not_found">Marke nicht gefunden</string>
+    <string name="model">Modell</string>
+    <string name="custom_use">Eigener Verbrauch</string>
+    <string name="custom_l">Eigener Verbrauch L/100</string>
+    <string name="year">Baujahr</string>
+    <string name="distance">Strecke, km</string>
+    <string name="city">Stadt</string>
+    <string name="highway">Autobahn</string>
+    <string name="offroad">Feldweg</string>
+    <string name="ac_on">AC an</string>
+    <string name="ac_off">AC aus</string>
+    <string name="heat_on">Heizung an</string>
+    <string name="heat_off">Heizung aus</string>
+    <string name="price">Preis pro Liter</string>
+    <string name="currency">Wahrung</string>
+    <string name="need_distance">Strecke angeben, km</string>
+    <string name="need_price">Preis pro Liter angeben</string>
+    <string name="need_custom">Verbrauch L/100 angeben</string>
+    <string name="need_model">Modell wahlen</string>
+    <string name="need_data">Daten fehlen</string>
+    <string name="unit_l">L</string>
+    <string name="language">Sprache</string>
+</resources>
