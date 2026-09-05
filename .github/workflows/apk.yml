@@ -10,23 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Decode launcher image if valid
+      - name: Decode exact launcher photo
         run: |
           python3 - <<'PY'
           import base64, pathlib
-          p = pathlib.Path('branding/ic_launcher.b64')
+          parts = sorted(pathlib.Path('branding').glob('ic_p*.txt'))
+          raw = ''.join(p.read_text().split() for p in parts)
+          raw += '=' * ((4 - len(raw) % 4) % 4)
+          data = base64.b64decode(raw)
           out = pathlib.Path('app/src/main/res/drawable/ic_launcher_src.jpg')
-          try:
-              raw = ''.join(p.read_text().split())
-              raw += '=' * ((4 - len(raw) % 4) % 4)
-              data = base64.b64decode(raw, validate=False)
-              if data[:3] in (b'\xff\xd8\xff', b'\x89PN'):
-                  out.write_bytes(data)
-                  print('wrote', out, out.stat().st_size)
-              else:
-                  print('skip invalid image bytes')
-          except Exception as e:
-              print('skip decode:', e)
+          out.write_bytes(data)
+          print('parts', len(parts), 'bytes', out.stat().st_size)
           PY
       - uses: actions/setup-java@v4
         with:
