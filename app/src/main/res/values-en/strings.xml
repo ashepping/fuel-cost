@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Let\'s Go</string>
+    <string name="subtitle">Fuel cost estimate</string>
+    <string name="brand">Make</string>
+    <string name="brand_not_found">Make not found</string>
+    <string name="model">Model</string>
+    <string name="custom_use">Custom use</string>
+    <string name="custom_l">Custom L/100</string>
+    <string name="year">Year</string>
+    <string name="distance">Distance, km</string>
+    <string name="city">City</string>
+    <string name="highway">Highway</string>
+    <string name="offroad">Dirt road</string>
+    <string name="ac_on">AC on</string>
+    <string name="ac_off">AC off</string>
+    <string name="heat_on">Heat on</string>
+    <string name="heat_off">Heat off</string>
+    <string name="price">Price per liter</string>
+    <string name="currency">Currency</string>
+    <string name="need_distance">Enter distance, km</string>
+    <string name="need_price">Enter price per liter</string>
+    <string name="need_custom">Enter custom L/100</string>
+    <string name="need_model">Choose a model</string>
+    <string name="need_data">Not enough data</string>
+    <string name="unit_l">L</string>
+    <string name="language">Language</string>
 </resources>
