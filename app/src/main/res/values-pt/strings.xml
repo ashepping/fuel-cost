@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vamos</string>
+    <string name="subtitle">Estimativa de combustivel</string>
+    <string name="brand">Marca</string>
+    <string name="brand_not_found">Marca nao encontrada</string>
+    <string name="model">Modelo</string>
+    <string name="custom_use">Consumo proprio</string>
+    <string name="custom_l">Consumo proprio L/100</string>
+    <string name="year">Ano</string>
+    <string name="distance">Distancia, km</string>
+    <string name="city">Cidade</string>
+    <string name="highway">Estrada</string>
+    <string name="offroad">Estrada de terra</string>
+    <string name="ac_on">AC on</string>
+    <string name="ac_off">AC off</string>
+    <string name="heat_on">Aquecimento on</string>
+    <string name="heat_off">Aquecimento off</string>
+    <string name="price">Preco por litro</string>
+    <string name="currency">Moeda</string>
+    <string name="need_distance">Informe a distancia, km</string>
+    <string name="need_price">Informe o preco por litro</string>
+    <string name="need_custom">Informe o consumo L/100</string>
+    <string name="need_model">Escolha um modelo</string>
+    <string name="need_data">Faltam dados</string>
+    <string name="unit_l">L</string>
+    <string name="language">Idioma</string>
+</resources>
