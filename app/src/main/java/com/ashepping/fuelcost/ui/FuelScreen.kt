@@ -1,6 +1,10 @@
 package com.ashepping.fuelcost.ui
 
+import android.content.Context
+import android.content.res.Configuration
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -9,8 +13,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -26,6 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,9 +43,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ashepping.fuelcost.R
 import com.ashepping.fuelcost.data.Cars
 import com.ashepping.fuelcost.data.Profile
 import com.ashepping.fuelcost.data.ProfileStore
@@ -47,15 +60,41 @@ import com.ashepping.fuelcost.domain.Currency
 import com.ashepping.fuelcost.domain.EstimateInput
 import com.ashepping.fuelcost.domain.Formula
 import com.ashepping.fuelcost.domain.Road
+import java.util.Locale
+
+private fun wrapLang(base: Context, code: String): Context {
+    val locale = Locale(code)
+    val config = Configuration(base.resources.configuration)
+    config.setLocale(locale)
+    config.setLayoutDirection(locale)
+    return base.createConfigurationContext(config)
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun FuelScreen() {
-    val context = LocalContext.current
-    val focus = LocalFocusManager.current
-    val store = remember { ProfileStore(context) }
+    val rawContext = LocalContext.current
+    val store = remember { ProfileStore(rawContext) }
     val saved = remember { store.load() }
+    var lang by rememberSaveable { mutableStateOf(saved.lang) }
+    val wrapped = remember(lang) { wrapLang(rawContext, lang) }
+    CompositionLocalProvider(
+        LocalContext provides wrapped,
+        LocalLayoutDirection provides if (lang == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr
+    ) {
+        FuelScreenBody(store, saved, lang) { lang = it }
+    }
+}
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun FuelScreenBody(
+    store: ProfileStore,
+    saved: Profile,
+    lang: String,
+    onLang: (String) -> Unit
+) {
+    val focus = LocalFocusManager.current
     var carId by rememberSaveable { mutableStateOf(saved.carId) }
     var customL by rememberSaveable { mutableStateOf(saved.customL) }
     var year by rememberSaveable { mutableStateOf(saved.year) }
@@ -69,13 +108,14 @@ fun FuelScreen() {
     var brandOpen by rememberSaveable { mutableStateOf(false) }
     var modelOpen by rememberSaveable { mutableStateOf(false) }
     var curOpen by rememberSaveable { mutableStateOf(false) }
+    var langOpen by rememberSaveable { mutableStateOf(false) }
     var brandQuery by rememberSaveable {
         mutableStateOf(Cars.byId(saved.carId)?.brand.orEmpty())
     }
     val look = runCatching { AppLook.valueOf(lookName) }.getOrDefault(AppLook.CURRENT)
 
-    LaunchedEffect(carId, customL, year, km, road, ac, heat, price, currency, lookName) {
-        store.save(Profile(carId, customL, year, km, road, ac, heat, price, currency, lookName))
+    LaunchedEffect(carId, customL, year, km, road, ac, heat, price, currency, lookName, lang) {
+        store.save(Profile(carId, customL, year, km, road, ac, heat, price, currency, lookName, lang))
     }
 
     val selected = if (carId == Cars.CUSTOM_ID) null else Cars.byId(carId)
@@ -88,7 +128,15 @@ fun FuelScreen() {
     val models = if (activeBrand == null) emptyList() else {
         Cars.catalog.filter { it.brand.equals(activeBrand, ignoreCase = true) }
     }
-    val resultText = computeResult(carId, selected, customL, year, km, road, ac, heat, price, currency)
+    val resultText = computeResult(
+        carId, selected, customL, year, km, road, ac, heat, price, currency,
+        stringResource(R.string.need_distance),
+        stringResource(R.string.need_price),
+        stringResource(R.string.need_custom),
+        stringResource(R.string.need_model),
+        stringResource(R.string.need_data),
+        stringResource(R.string.unit_l)
+    )
 
     fun pickBrand(brand: String) {
         brandQuery = brand
@@ -119,8 +167,40 @@ fun FuelScreen() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Поехали", style = MaterialTheme.typography.headlineMedium)
-                        Text("Оценка расхода топлива", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+                        Text(stringResource(R.string.subtitle), style = MaterialTheme.typography.bodySmall)
+                    }
+                    ExposedDropdownMenuBox(expanded = langOpen, onExpandedChange = { langOpen = it }) {
+                        IconButton(onClick = { langOpen = true }, modifier = Modifier.menuAnchor()) {
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .border(1.5.dp, MaterialTheme.colorScheme.onSurface, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    AppLangs.of(lang).shortCode,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        ExposedDropdownMenu(
+                            expanded = langOpen,
+                            onDismissRequest = { langOpen = false },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            AppLangs.all.forEach { item ->
+                                DropdownMenuItem(
+                                    text = { Text("${item.shortCode}  ${item.label}") },
+                                    onClick = {
+                                        onLang(item.code)
+                                        langOpen = false
+                                    },
+                                    colors = menuColors
+                                )
+                            }
+                        }
                     }
                     IconButton(onClick = {
                         lookName = when (look) {
@@ -141,7 +221,7 @@ fun FuelScreen() {
                             brandOpen = true
                             modelOpen = false
                         },
-                        label = { Text("Марка") },
+                        label = { Text(stringResource(R.string.brand)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(brandOpen) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -157,7 +237,7 @@ fun FuelScreen() {
                     ) {
                         if (brandMatches.isEmpty()) {
                             DropdownMenuItem(
-                                text = { Text("Марка не найдена") },
+                                text = { Text(stringResource(R.string.brand_not_found)) },
                                 onClick = { brandOpen = false },
                                 colors = menuColors
                             )
@@ -182,14 +262,14 @@ fun FuelScreen() {
                     OutlinedTextField(
                         value = when {
                             activeBrand == null -> ""
-                            carId == Cars.CUSTOM_ID -> "Свой расход"
+                            carId == Cars.CUSTOM_ID -> stringResource(R.string.custom_use)
                             selected?.brand.equals(activeBrand, ignoreCase = true) -> selected?.model.orEmpty()
                             else -> ""
                         },
                         onValueChange = {},
                         readOnly = true,
                         enabled = activeBrand != null,
-                        label = { Text("Модель") },
+                        label = { Text(stringResource(R.string.model)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(modelOpen) },
                         modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
@@ -199,7 +279,7 @@ fun FuelScreen() {
                         containerColor = MaterialTheme.colorScheme.secondaryContainer
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Свой расход") },
+                            text = { Text(stringResource(R.string.custom_use)) },
                             onClick = { carId = Cars.CUSTOM_ID; modelOpen = false },
                             colors = menuColors
                         )
@@ -217,7 +297,7 @@ fun FuelScreen() {
                     OutlinedTextField(
                         value = customL,
                         onValueChange = { customL = it },
-                        label = { Text("Свой расход л/100") },
+                        label = { Text(stringResource(R.string.custom_l)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -225,14 +305,14 @@ fun FuelScreen() {
                 OutlinedTextField(
                     value = year,
                     onValueChange = { year = it.filter { ch -> ch.isDigit() }.take(4) },
-                    label = { Text("Год выпуска") },
+                    label = { Text(stringResource(R.string.year)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = km,
                     onValueChange = { km = it },
-                    label = { Text("Дистанция, км") },
+                    label = { Text(stringResource(R.string.distance)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -240,22 +320,22 @@ fun FuelScreen() {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    FilterChip(selected = road == Road.CITY.name, onClick = { road = Road.CITY.name }, label = { Text("Город") })
-                    FilterChip(selected = road == Road.HIGHWAY.name, onClick = { road = Road.HIGHWAY.name }, label = { Text("Шоссе") })
-                    FilterChip(selected = road == Road.OFFROAD.name, onClick = { road = Road.OFFROAD.name }, label = { Text("Грунтовая дорога") })
+                    FilterChip(selected = road == Road.CITY.name, onClick = { road = Road.CITY.name }, label = { Text(stringResource(R.string.city)) })
+                    FilterChip(selected = road == Road.HIGHWAY.name, onClick = { road = Road.HIGHWAY.name }, label = { Text(stringResource(R.string.highway)) })
+                    FilterChip(selected = road == Road.OFFROAD.name, onClick = { road = Road.OFFROAD.name }, label = { Text(stringResource(R.string.offroad)) })
                 }
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    FilterChip(selected = ac, onClick = { ac = !ac }, label = { Text(if (ac) "AC вкл" else "AC выкл") })
-                    FilterChip(selected = heat, onClick = { heat = !heat }, label = { Text(if (heat) "Обогрев вкл" else "Обогрев выкл") })
+                    FilterChip(selected = ac, onClick = { ac = !ac }, label = { Text(stringResource(if (ac) R.string.ac_on else R.string.ac_off)) })
+                    FilterChip(selected = heat, onClick = { heat = !heat }, label = { Text(stringResource(if (heat) R.string.heat_on else R.string.heat_off)) })
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = price,
                         onValueChange = { price = it },
-                        label = { Text("Цена литра") },
+                        label = { Text(stringResource(R.string.price)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -264,7 +344,7 @@ fun FuelScreen() {
                             value = currency,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Валюта") },
+                            label = { Text(stringResource(R.string.currency)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(curOpen) },
                             modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
@@ -309,17 +389,23 @@ private fun computeResult(
     ac: Boolean,
     heat: Boolean,
     price: String,
-    currency: String
+    currency: String,
+    needDistance: String,
+    needPrice: String,
+    needCustom: String,
+    needModel: String,
+    needData: String,
+    unitL: String
 ): String {
     val distance = parseNum(km)
     val p = parseNum(price)
-    if (distance == null || distance <= 0) return "Укажи дистанцию, км"
-    if (p == null || p <= 0) return "Укажи цену литра"
+    if (distance == null || distance <= 0) return needDistance
+    if (p == null || p <= 0) return needPrice
     if (carId == Cars.CUSTOM_ID) {
         val mixed = parseNum(customL)
-        if (mixed == null || mixed <= 0) return "Укажи свой расход л/100"
+        if (mixed == null || mixed <= 0) return needCustom
     } else if (selected == null) {
-        return "Выбери модель"
+        return needModel
     }
     val y = year.toIntOrNull()
     val roadEnum = runCatching { Road.valueOf(road) }.getOrDefault(Road.HIGHWAY)
@@ -328,6 +414,6 @@ private fun computeResult(
     } else {
         EstimateInput(selected!!.cityL100, selected.highwayL100, null, y, distance, roadEnum, ac, heat, p)
     }
-    val out = Formula.estimate(input) ?: return "Не хватает данных"
-    return "${out.litersText} л | ${out.costText} $currency"
+    val out = Formula.estimate(input) ?: return needData
+    return "${out.litersText} $unitL | ${out.costText} $currency"
 }
