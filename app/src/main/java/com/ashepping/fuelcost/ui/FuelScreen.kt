@@ -3,6 +3,7 @@ package com.ashepping.fuelcost.ui
 import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -12,10 +13,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ashepping.fuelcost.R
 import com.ashepping.fuelcost.data.Cars
 import com.ashepping.fuelcost.data.Profile
@@ -98,7 +102,9 @@ private fun FuelScreenBody(
     var heat by rememberSaveable { mutableStateOf(saved.heat) }
     var price by rememberSaveable { mutableStateOf(saved.price) }
     var currency by rememberSaveable { mutableStateOf(saved.currency) }
-    var lookName by rememberSaveable { mutableStateOf(saved.look) }
+    var lookName by rememberSaveable {
+        mutableStateOf(if (saved.look == "CURRENT") "NEURAL_DARK" else saved.look)
+    }
     var brandOpen by rememberSaveable { mutableStateOf(false) }
     var modelOpen by rememberSaveable { mutableStateOf(false) }
     var curOpen by rememberSaveable { mutableStateOf(false) }
@@ -106,7 +112,7 @@ private fun FuelScreenBody(
     var brandQuery by rememberSaveable {
         mutableStateOf(Cars.byId(saved.carId)?.brand.orEmpty())
     }
-    val look = runCatching { AppLook.valueOf(lookName) }.getOrDefault(AppLook.CURRENT)
+    val look = runCatching { AppLook.valueOf(lookName) }.getOrDefault(AppLook.NEURAL_DARK)
 
     LaunchedEffect(carId, customL, year, km, road, ac, heat, price, currency, lookName, lang) {
         store.save(Profile(carId, customL, year, km, road, ac, heat, price, currency, lookName, lang))
@@ -164,18 +170,24 @@ private fun FuelScreenBody(
                         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
                         Text(stringResource(R.string.subtitle), style = MaterialTheme.typography.bodySmall)
                     }
-                    ExposedDropdownMenuBox(expanded = langOpen, onExpandedChange = { langOpen = it }) {
-                        IconButton(onClick = { langOpen = true }, modifier = Modifier.menuAnchor()) {
+                    Box {
+                        IconButton(onClick = { langOpen = true }) {
                             LangMark(look)
                         }
-                        ExposedDropdownMenu(
+                        DropdownMenu(
                             expanded = langOpen,
                             onDismissRequest = { langOpen = false },
                             containerColor = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             AppLangs.all.forEach { item ->
                                 DropdownMenuItem(
-                                    text = { Text(item.shortCode) },
+                                    text = {
+                                        Text(
+                                            item.shortCode,
+                                            fontSize = 13.sp,
+                                            modifier = Modifier.widthIn(min = 48.dp)
+                                        )
+                                    },
                                     onClick = {
                                         onLang(item.code)
                                         langOpen = false
