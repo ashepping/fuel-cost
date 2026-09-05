@@ -15,7 +15,7 @@ private val Good = Color(0xFF059669)
 private val ChipOn = Color(0xFF5B5470)
 
 @Composable
-fun FuelTheme(look: AppLook = AppLook.CURRENT, content: @Composable () -> Unit) {
+fun FuelTheme(look: AppLook = AppLook.NEURAL_DARK, content: @Composable () -> Unit) {
     val colors = when (look) {
         AppLook.CURRENT -> darkColorScheme(
             background = Navy,
