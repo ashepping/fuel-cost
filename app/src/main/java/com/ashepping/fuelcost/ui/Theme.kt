@@ -9,6 +9,7 @@ private val Navy = Color(0xFF0F172A)
 private val Card = Color(0xFF1E293B)
 private val Accent = Color(0xFF2563EB)
 private val Good = Color(0xFF059669)
+private val ChipOn = Color(0xFF5B5470)
 
 @Composable
 fun FuelTheme(content: @Composable () -> Unit) {
@@ -18,6 +19,8 @@ fun FuelTheme(content: @Composable () -> Unit) {
             surface = Card,
             primary = Accent,
             secondary = Good,
+            secondaryContainer = ChipOn,
+            onSecondaryContainer = Color.White,
             onBackground = Color.White,
             onSurface = Color.White,
             onPrimary = Color.White
