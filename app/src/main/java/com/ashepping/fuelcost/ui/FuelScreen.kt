@@ -17,6 +17,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -59,23 +60,34 @@ fun FuelScreen() {
     var heat by rememberSaveable { mutableStateOf(saved.heat) }
     var price by rememberSaveable { mutableStateOf(saved.price) }
     var currency by rememberSaveable { mutableStateOf(saved.currency) }
-    var menuOpen by rememberSaveable { mutableStateOf(false) }
+    var brandOpen by rememberSaveable { mutableStateOf(false) }
+    var modelOpen by rememberSaveable { mutableStateOf(false) }
     var curOpen by rememberSaveable { mutableStateOf(false) }
-    var carQuery by rememberSaveable { mutableStateOf("") }
+    var brandQuery by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(carId, customL, year, km, road, ac, heat, price, currency) {
         store.save(Profile(carId, customL, year, km, road, ac, heat, price, currency))
     }
 
     val selected = if (carId == Cars.CUSTOM_ID) null else Cars.byId(carId)
-    val label = if (carId == Cars.CUSTOM_ID) "Свой расход" else selected?.title ?: "Toyota Corolla"
+    val brands = remember { Cars.catalog.map { it.brand }.distinct().sorted() }
+    val brandNow = selected?.brand.orEmpty()
+    val brandFilter = brandQuery.ifBlank { brandNow }
+    val brandMatches = brands.filter { it.startsWith(brandFilter, ignoreCase = true) }
+    val models = Cars.catalog.filter { it.brand.equals(brandNow, ignoreCase = true) }
     val resultText = computeResult(carId, selected, customL, year, km, road, ac, heat, price, currency)
-    val carsShown = Cars.search(carQuery)
+    val menuColors = MenuDefaults.itemColors(
+        textColor = MaterialTheme.colorScheme.onSecondaryContainer
+    )
 
-    fun pickCar(id: String) {
-        carId = id
-        carQuery = ""
-        menuOpen = false
+    fun pickBrand(brand: String) {
+        brandQuery = brand
+        brandOpen = false
+        val same = selected?.brand.equals(brand, ignoreCase = true)
+        if (!same) {
+            val first = Cars.catalog.firstOrNull { it.brand.equals(brand, ignoreCase = true) }
+            carId = first?.id ?: Cars.CUSTOM_ID
+        }
         focus.clearFocus()
     }
 
@@ -89,59 +101,81 @@ fun FuelScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("Поехали", style = MaterialTheme.typography.headlineMedium)
-            Surface(
-                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(resultText, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
-            }
             Text("Оценка расхода", style = MaterialTheme.typography.bodySmall)
-            ExposedDropdownMenuBox(expanded = menuOpen, onExpandedChange = { menuOpen = it }) {
+
+            ExposedDropdownMenuBox(expanded = brandOpen, onExpandedChange = { brandOpen = it }) {
                 OutlinedTextField(
-                    value = if (menuOpen || carQuery.isNotBlank()) carQuery else label,
+                    value = if (brandOpen || brandQuery.isNotBlank()) brandQuery else brandNow.ifBlank { "" },
                     onValueChange = {
-                        carQuery = it
-                        menuOpen = true
+                        brandQuery = it
+                        brandOpen = true
                     },
-                    label = { Text("Марка или модель") },
-                    placeholder = { Text("Начни печатать Toyota") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(menuOpen) },
+                    label = { Text("Марка") },
+                    placeholder = { Text("Toyota") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(brandOpen) },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            val first = carsShown.firstOrNull()
-                            when {
-                                carQuery.isBlank() -> pickCar(Cars.CUSTOM_ID)
-                                first != null -> pickCar(first.id)
-                            }
-                        }
-                    ),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        brandMatches.firstOrNull()?.let { pickBrand(it) }
+                    }),
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-                ExposedDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Свой расход") },
-                        onClick = { pickCar(Cars.CUSTOM_ID) }
-                    )
-                    if (carsShown.isEmpty()) {
+                ExposedDropdownMenu(
+                    expanded = brandOpen,
+                    onDismissRequest = { brandOpen = false },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    if (brandMatches.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("Ничего не найдено") },
-                            onClick = { menuOpen = false }
+                            text = { Text("Марка не найдена") },
+                            onClick = { brandOpen = false },
+                            colors = menuColors
                         )
                     } else {
-                        carsShown.take(40).forEach { car ->
+                        brandMatches.forEach { brand ->
                             DropdownMenuItem(
-                                text = { Text(car.title) },
-                                onClick = { pickCar(car.id) }
+                                text = { Text(brand) },
+                                onClick = { pickBrand(brand) },
+                                colors = menuColors
                             )
                         }
                     }
                 }
             }
+
+            ExposedDropdownMenuBox(expanded = modelOpen, onExpandedChange = { modelOpen = it }) {
+                OutlinedTextField(
+                    value = when {
+                        carId == Cars.CUSTOM_ID -> "Свой расход"
+                        selected != null -> selected.model
+                        else -> ""
+                    },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Модель") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(modelOpen) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = modelOpen,
+                    onDismissRequest = { modelOpen = false },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Свой расход") },
+                        onClick = { carId = Cars.CUSTOM_ID; modelOpen = false },
+                        colors = menuColors
+                    )
+                    models.forEach { car ->
+                        DropdownMenuItem(
+                            text = { Text(car.model) },
+                            onClick = { carId = car.id; modelOpen = false },
+                            colors = menuColors
+                        )
+                    }
+                }
+            }
+
             if (carId == Cars.CUSTOM_ID) {
                 OutlinedTextField(
                     value = customL,
@@ -191,12 +225,27 @@ fun FuelScreen() {
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(curOpen) },
                         modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
-                    ExposedDropdownMenu(expanded = curOpen, onDismissRequest = { curOpen = false }) {
+                    ExposedDropdownMenu(
+                        expanded = curOpen,
+                        onDismissRequest = { curOpen = false },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
                         Currency.entries.forEach {
-                            DropdownMenuItem(text = { Text(it.code) }, onClick = { currency = it.code; curOpen = false })
+                            DropdownMenuItem(
+                                text = { Text(it.code) },
+                                onClick = { currency = it.code; curOpen = false },
+                                colors = menuColors
+                            )
                         }
                     }
                 }
+            }
+
+            Surface(
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(resultText, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
             }
         }
     }
