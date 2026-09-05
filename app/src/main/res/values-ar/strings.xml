@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">يللا</string>
+    <string name="subtitle">تقدير تكلفة الوقود</string>
+    <string name="brand">العلامة</string>
+    <string name="brand_not_found">العلامة غير موجودة</string>
+    <string name="model">الطراز</string>
+    <string name="custom_use">استهلاك خاص</string>
+    <string name="custom_l">استهلاك خاص ل/١٠٠</string>
+    <string name="year">سنة الصنع</string>
+    <string name="distance">المسافة، كم</string>
+    <string name="city">مدينة</string>
+    <string name="highway">طريق سريع</string>
+    <string name="offroad">طريق ترابي</string>
+    <string name="ac_on">التكييف شغال</string>
+    <string name="ac_off">التكييف مطفأ</string>
+    <string name="heat_on">التدفئة شغالة</string>
+    <string name="heat_off">التدفئة مطفأة</string>
+    <string name="price">سعر اللتر</string>
+    <string name="currency">العملة</string>
+    <string name="need_distance">أدخل المسافة، كم</string>
+    <string name="need_price">أدخل سعر اللتر</string>
+    <string name="need_custom">أدخل الاستهلاك ل/١٠٠</string>
+    <string name="need_model">اختر الطراز</string>
+    <string name="need_data">بيانات ناقصة</string>
+    <string name="unit_l">ل</string>
+    <string name="language">اللغة</string>
+</resources>
