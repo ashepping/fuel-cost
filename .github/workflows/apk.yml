@@ -15,12 +15,12 @@ jobs:
           python3 - <<'PY'
           import base64, pathlib
           parts = sorted(pathlib.Path('branding').glob('ic_p*.txt'))
-          raw = ''.join(p.read_text().split() for p in parts)
+          raw = ''.join(''.join(p.read_text().split()) for p in parts)
           raw += '=' * ((4 - len(raw) % 4) % 4)
           data = base64.b64decode(raw)
           out = pathlib.Path('app/src/main/res/drawable/ic_launcher_src.jpg')
           out.write_bytes(data)
-          print('parts', len(parts), 'bytes', out.stat().st_size)
+          print('parts', [p.name for p in parts], 'bytes', out.stat().st_size)
           PY
       - uses: actions/setup-java@v4
         with:
